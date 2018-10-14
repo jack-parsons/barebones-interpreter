@@ -169,7 +169,7 @@ public class Interpreter {
 	
 	private void decrementVar(String varName) {
 		// Decrement the value of the variable at name
-		if (variableNamespace.containsKey(varName)) {
+		if (variableNamespace.containsKey(varName) && variableNamespace.get(varName) > 0) {
 			variableNamespace.put(varName, variableNamespace.get(varName) - 1);
 		} else {
 			variableNamespace.put(varName, 0); // If undeclared then set to 0 ***
