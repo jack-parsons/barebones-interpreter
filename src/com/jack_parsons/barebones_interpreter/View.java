@@ -9,6 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JSplitPane;
 import javax.swing.JEditorPane;
+import javax.swing.JFileChooser;
 import javax.swing.JToolBar;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -28,10 +29,19 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import java.awt.Panel;
 import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class View {
 
 	private JFrame frame;
+	private final JFileChooser fileExplorerWindow = new JFileChooser();
+	private JTextArea txtrWaiting;
+	JEditorPane editorPane;
 	/**
 	 * @wbp.nonvisual location=-30,181
 	 */
@@ -65,7 +75,7 @@ public class View {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 540, 358);
+		frame.setBounds(100, 100, 720, 540);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		JMenuBar menuBar = new JMenuBar();
@@ -74,30 +84,53 @@ public class View {
 		JMenu mnV = new JMenu("File");
 		menuBar.add(mnV);
 		
-		JButton btnOpenFile = new JButton("New File");
-		btnOpenFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
+		JButton btnOpenFile_1 = new JButton("Open File");
+		btnOpenFile_1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
+				int returnVal = fileExplorerWindow.showOpenDialog(frame);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+		            File file = fileExplorerWindow.getSelectedFile();
+		            updateEditorManager(file);
+				}
 			}
 		});
-		mnV.add(btnOpenFile);
-		
-		JButton btnOpenFile_1 = new JButton("Open File");
 		btnOpenFile_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
 		mnV.add(btnOpenFile_1);
 		
+		JButton btnSaveFile = new JButton("Save File");
+		mnV.add(btnSaveFile);
+		
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setResizeWeight(1.0);
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
 		
-		JEditorPane editorPane = new JEditorPane();
+		editorPane = new JEditorPane();
 		splitPane.setLeftComponent(editorPane);
 		
-		JTextArea txtrWaiting = new JTextArea();
+		txtrWaiting = new JTextArea();
 		txtrWaiting.setText("waiting...");
 		splitPane.setRightComponent(txtrWaiting);
+	}
+	
+	private void updateEditorManager(File file) {
+		try {
+			BufferedReader bareboneBufferedReader = new BufferedReader(new FileReader(file));
+			String line = "";
+			StringBuilder fileText = new StringBuilder();
+			while (line != null){
+				line = bareboneBufferedReader.readLine();
+				fileText.append(line+"\n");
+			}
+			editorPane.setText(fileText.toString());
+			bareboneBufferedReader.close();
+		} catch (IOException e) {
+			System.out.println("Error reading file");
+		}
 	}
 }
