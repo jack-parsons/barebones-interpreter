@@ -2,9 +2,7 @@ package com.jack_parsons.barebones_interpreter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Stack;
+import java.util.*;
 
 public class Interpreter {
 	private BufferedReader barebonesBufferedReader;
@@ -19,6 +17,7 @@ public class Interpreter {
 		// barebonesBufferedReader is the BufferedReader for the file containing the source code
 		this.barebonesBufferedReader = barebonesBufferedReader;
 		this.barebonesCode = new ArrayList<String[]>();
+		timeTaken = -1; // Initialise timeTaken so if printTimeTaken is called before start it doesn't cause an exception
 	}
 	
 	public void start () {
@@ -28,14 +27,15 @@ public class Interpreter {
 		variableNamespace = new HashMap<String, Integer>();
 		currentLine = 0;
 		while (currentLine < barebonesCode.size()) {
-			executeLine(barebonesCode.get(currentLine));
+			executeLine(barebonesCode.get(currentLine), currentLine);
 			currentLine ++;
 		}
-		// Print the execution time
+		// Calculate the time taken to execute program
 		timeTaken = (System.nanoTime() - startTime)/1000000;
 	}
 	
 	public void printTimeTaken(){
+		// Print the time taken for the last program to execute
 		System.out.println(String.format("\nExecution finished in %dms", timeTaken));
 	}
 	
@@ -45,6 +45,17 @@ public class Interpreter {
 		for (String key : variableNamespace.keySet()){
 			System.out.println(String.format("%s <- %d", key, variableNamespace.get(key)));
 		}
+	}
+	
+	private void errorMessage(String message, int lineNumber){
+		/* Prints an error message.
+		 * If lineNumber is -1, the line number does not print.
+		 * Terminates the program after printing message. */
+		if (lineNumber != -1){
+			System.out.println("\nError on line:" + (lineNumber + 1));
+		}
+		System.out.println(message);
+		System.exit(1);
 	}
 	
 	private void processWhileJumpPoints() {
@@ -58,8 +69,15 @@ public class Interpreter {
 				whilePositions.add(lineNumber);
 			} else if (line[0].equals("end")){
 				// Add a new jump to the while jumps HashMap and remove the top while loop from the stack
-				whileJumps.put(whilePositions.pop(), lineNumber);
+				try {
+					whileJumps.put(whilePositions.pop(), lineNumber);
+				} catch (EmptyStackException e) {
+					errorMessage("while-end mismatch", lineNumber);
+				}
 			}
+		}
+		if (whilePositions.size() != 0){
+			errorMessage("while-end mismatch", -1);
 		}
 	}
 	
@@ -67,6 +85,7 @@ public class Interpreter {
 		// Transfer all barebones code into string ArrayList for fast access 
 		try {
 			String line = barebonesBufferedReader.readLine();
+			int lineNumber = 0;
 			while (line != null) {
 				for (String part : line.split(";")){
 					// Do this so semicolon can allow multiple commands on one line
@@ -75,8 +94,14 @@ public class Interpreter {
 						// Check that the line is not empty before adding it to processed code
 						// Also split the line into parts
 						// TODO add argument checking
-						barebonesCode.add(splitLineIntoParts(part));
-					}
+						String[] lineParts = splitLineIntoParts(part);
+						if (correctArguments(lineParts)){
+							barebonesCode.add(lineParts);
+							lineNumber ++;
+						} else {
+							errorMessage("Incorrect arguments", lineNumber);
+						}
+					}	
 				}
 				
 				line = barebonesBufferedReader.readLine();
@@ -88,12 +113,31 @@ public class Interpreter {
 		}
 	}
 	
+	private static boolean correctArguments(String[] line) {
+		// Check that the arguments given are valid
+		boolean valid = false;
+		switch (line[0]) {
+		case "clear":
+		case "incr":
+		case "decr":
+			valid = (line.length == 2);
+			break;
+		case "while":
+			valid = (line.length == 5);
+			break;
+		case "end":
+			valid = (line.length == 1);
+			break;
+		}
+		return valid;
+	}
+	
 	private static String[] splitLineIntoParts(String line) {
 		// Splits the line into parts separated by spaces
 		return line.split(" ");
 	}
 	
-	private void executeLine (String[] line) {
+	private void executeLine (String[] line, int lineNumber) {
 		// Decode the instruction then execute it with any operands
 		
 		// Find the operation
@@ -114,7 +158,7 @@ public class Interpreter {
 			endStatement();
 			break;
 		default:
-			System.out.println(String.format("Invalid operator"));
+			errorMessage(String.format("Invalid operator"), lineNumber);
 		}
 	}
 	
@@ -123,8 +167,8 @@ public class Interpreter {
 			// Try to convert to integer
 			return Integer.parseInt(value);
 		} catch (NumberFormatException e) {
-			// If not it is string
-			return value;
+			errorMessage("Invalid operand: "+value, -1);
+			return null;
 		}
 	}
 	
