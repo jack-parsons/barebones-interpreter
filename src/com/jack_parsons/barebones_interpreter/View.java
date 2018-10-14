@@ -110,6 +110,7 @@ public class View {
 		mnV.add(btnSaveFile);
 		
 		JButton btnNewButton = new JButton("Start");
+		btnNewButton.setToolTipText("");
 		btnNewButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -130,12 +131,14 @@ public class View {
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
 		
 		editorPane = new JEditorPane();
-		splitPane.setLeftComponent(editorPane);
+		JScrollPane scrollPlane2 = new JScrollPane(editorPane);
+		splitPane.setLeftComponent(scrollPlane2);
 		
 		txtrWaiting = new JTextArea();
 		txtrWaiting.setEditable(false);
 		txtrWaiting.setText("waiting...");
-		splitPane.setRightComponent(txtrWaiting);
+		JScrollPane scrollPlane1 = new JScrollPane(txtrWaiting);
+		splitPane.setRightComponent(scrollPlane1);
 	}
 	
 	private void updateEditorManager(File file) {
