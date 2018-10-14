@@ -137,6 +137,11 @@ public class Interpreter {
 		// Start of a while loop
 		boolean conditionMet;
 		
+		if (!variableNamespace.containsKey(varName)){
+			// If the variable is not initialised yet, set it to zero
+			clearVar(varName);
+		}
+		
 		switch (Operator){
 		case "not":
 			conditionMet = !variableNamespace.get(varName).equals(convertToActualType(conditionValue));
