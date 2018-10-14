@@ -11,7 +11,7 @@ public class Interpreter {
 	private HashMap<String, Integer> variableNamespace;
 	private HashMap<Integer, Integer> whileJumps;
 	private Stack<Integer> whileStack = new Stack<Integer>();
-	private long timeTaken;
+	private float timeTaken;
 	
 	Interpreter (BufferedReader barebonesBufferedReader) {
 		// barebonesBufferedReader is the BufferedReader for the file containing the source code
@@ -31,12 +31,12 @@ public class Interpreter {
 			currentLine ++;
 		}
 		// Calculate the time taken to execute program
-		timeTaken = (System.nanoTime() - startTime)/1000000;
+		timeTaken = (float)(System.nanoTime() - startTime)/1000000;
 	}
 	
 	public void printTimeTaken(){
 		// Print the time taken for the last program to execute
-		System.out.println(String.format("\nExecution finished in %dms", timeTaken));
+		System.out.println(String.format("\nExecution finished in %fms", timeTaken));
 	}
 	
 	public void printMemory () {
