@@ -37,6 +37,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.JScrollBar;
 import java.awt.Color;
+import javax.swing.JSeparator;
 
 public class View {
 
@@ -106,10 +107,17 @@ public class View {
 		});
 		mnV.add(btnOpenFile_1);
 		
-		JButton btnSaveFile = new JButton("Save File");
+		JButton btnSaveAs = new JButton("Save As");
+		btnSaveAs.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		mnV.add(btnSaveAs);
+		
+		JButton btnSaveFile = new JButton("Save");
 		mnV.add(btnSaveFile);
 		
-		JButton btnNewButton = new JButton("Start");
+		JButton btnNewButton = new JButton("Run");
 		btnNewButton.setToolTipText("");
 		btnNewButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -121,6 +129,9 @@ public class View {
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
+		
+		JSeparator separator = new JSeparator();
+		menuBar.add(separator);
 		menuBar.add(btnNewButton);
 		
 		JSplitPane splitPane = new JSplitPane();
