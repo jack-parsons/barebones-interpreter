@@ -12,7 +12,8 @@ public class Interpreter {
 	private int currentLine;
 	private HashMap<String, Integer> variableNamespace;
 	private HashMap<Integer, Integer> whileJumps;
-	Stack<Integer> whileStack = new Stack<Integer>();
+	private Stack<Integer> whileStack = new Stack<Integer>();
+	private long timeTaken;
 	
 	Interpreter (BufferedReader barebonesBufferedReader) {
 		// barebonesBufferedReader is the BufferedReader for the file containing the source code
@@ -31,14 +32,16 @@ public class Interpreter {
 			currentLine ++;
 		}
 		// Print the execution time
-		long timeTaken = (System.nanoTime() - startTime)/1000000;
-		System.out.println(String.format("Execution finished in %dms\n", timeTaken));
-		printMemory();
+		timeTaken = (System.nanoTime() - startTime)/1000000;
+	}
+	
+	public void printTimeTaken(){
+		System.out.println(String.format("\nExecution finished in %dms", timeTaken));
 	}
 	
 	public void printMemory () {
 		// Prints all the variables
-		System.out.println("Memory:");
+		System.out.println("\nMemory:");
 		for (String key : variableNamespace.keySet()){
 			System.out.println(String.format("%s <- %d", key, variableNamespace.get(key)));
 		}
@@ -51,15 +54,17 @@ public class Interpreter {
 		for (int lineNumber = 0; lineNumber < barebonesCode.size(); lineNumber++) {
 			String[] line = barebonesCode.get(lineNumber);
 			if (line[0].equals("while")){
+				// Put this while loop line number at the top of the stack
 				whilePositions.add(lineNumber);
 			} else if (line[0].equals("end")){
+				// Add a new jump to the while jumps HashMap and remove the top while loop from the stack
 				whileJumps.put(whilePositions.pop(), lineNumber);
 			}
 		}
 	}
 	
 	private void processFile(){
-		// Transfer all barebones code into string arraylist for fast access 
+		// Transfer all barebones code into string ArrayList for fast access 
 		try {
 			String line = barebonesBufferedReader.readLine();
 			while (line != null) {
@@ -84,6 +89,7 @@ public class Interpreter {
 	}
 	
 	private static String[] splitLineIntoParts(String line) {
+		// Splits the line into parts separated by spaces
 		return line.split(" ");
 	}
 	
