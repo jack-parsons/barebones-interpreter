@@ -34,17 +34,19 @@ public class Interpreter {
 		timeTaken = (float)(System.nanoTime() - startTime)/1000000;
 	}
 	
-	public void printTimeTaken(){
+	public String printTimeTaken(){
 		// Print the time taken for the last program to execute
-		System.out.println(String.format("\nExecution finished in %fms", timeTaken));
+		String s = String.format("\nExecution finished in %fms", timeTaken);
+		return s;
 	}
 	
-	public void printMemory () {
+	public String printMemory () {
 		// Prints all the variables
-		System.out.println("\nMemory:");
+		String s = "\nMemory:";
 		for (String key : variableNamespace.keySet()){
-			System.out.println(String.format("%s <- %d", key, variableNamespace.get(key)));
+			s += String.format("\n%s <- %d", key, variableNamespace.get(key));
 		}
+		return s;
 	}
 	
 	private void errorMessage(String message, int lineNumber){

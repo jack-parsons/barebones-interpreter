@@ -35,13 +35,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import javax.swing.JScrollBar;
+import java.awt.Color;
 
 public class View {
 
 	private JFrame frame;
 	private final JFileChooser fileExplorerWindow = new JFileChooser();
 	private JTextArea txtrWaiting;
-	JEditorPane editorPane;
+	private JEditorPane editorPane;
+	private File currentFile;
 	/**
 	 * @wbp.nonvisual location=-30,181
 	 */
@@ -93,6 +96,7 @@ public class View {
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 		            File file = fileExplorerWindow.getSelectedFile();
 		            updateEditorManager(file);
+		            currentFile = file;
 				}
 			}
 		});
@@ -105,8 +109,23 @@ public class View {
 		JButton btnSaveFile = new JButton("Save File");
 		mnV.add(btnSaveFile);
 		
+		JButton btnNewButton = new JButton("Start");
+		btnNewButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				startInterpreting();
+			}
+		});
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		menuBar.add(btnNewButton);
+		
 		JSplitPane splitPane = new JSplitPane();
-		splitPane.setResizeWeight(1.0);
+		splitPane.setOneTouchExpandable(true);
+		splitPane.setBackground(Color.LIGHT_GRAY);
+		splitPane.setResizeWeight(0.9);
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
 		
@@ -114,6 +133,7 @@ public class View {
 		splitPane.setLeftComponent(editorPane);
 		
 		txtrWaiting = new JTextArea();
+		txtrWaiting.setEditable(false);
 		txtrWaiting.setText("waiting...");
 		splitPane.setRightComponent(txtrWaiting);
 	}
@@ -121,16 +141,30 @@ public class View {
 	private void updateEditorManager(File file) {
 		try {
 			BufferedReader bareboneBufferedReader = new BufferedReader(new FileReader(file));
-			String line = "";
+			String line;
 			StringBuilder fileText = new StringBuilder();
-			while (line != null){
+			do {
 				line = bareboneBufferedReader.readLine();
-				fileText.append(line+"\n");
-			}
+				if (line != null){
+					fileText.append(line+"\n");
+				}
+			} while (line != null);
 			editorPane.setText(fileText.toString());
 			bareboneBufferedReader.close();
 		} catch (IOException e) {
 			System.out.println("Error reading file");
 		}
+	}
+	
+	private void startInterpreting(){
+		try {
+			Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
+			interpreter.start();
+			txtrWaiting.append(interpreter.printMemory());
+		} catch (IOException e) {
+			txtrWaiting.setText("\nError starting interpreter");
+			System.out.println("Note");
+		}
+		
 	}
 }
