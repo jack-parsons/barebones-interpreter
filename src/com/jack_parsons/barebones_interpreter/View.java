@@ -26,6 +26,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import java.awt.Panel;
 import java.awt.FlowLayout;
@@ -48,7 +49,9 @@ public class View {
 	private JTextArea txtrWaiting;
 	private JEditorPane editorPane;
 	private File currentFile = null;
-	public final String windowTitle = "BareBones Interpreter";
+	private final String windowTitle = "BareBones Interpreter";
+	private boolean textChanged = true;
+	
 	/**
 	 * @wbp.nonvisual location=-30,181
 	 */
@@ -91,7 +94,7 @@ public class View {
 				}
 			}
 		});
-		frmBarebonesInterpreterIde.setBounds(100, 100, 720, 540);
+		frmBarebonesInterpreterIde.setBounds(100, 100, 900, 600);
 		frmBarebonesInterpreterIde.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		JMenuBar menuBar = new JMenuBar();
@@ -171,6 +174,12 @@ public class View {
 		frmBarebonesInterpreterIde.getContentPane().add(splitPane, BorderLayout.CENTER);
 		
 		editorPane = new JEditorPane();
+		editorPane.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				textChanged = true;  // Now prompt will appear asking to save
+			}
+		});
 		JScrollPane scrollPlane2 = new JScrollPane(editorPane);
 		splitPane.setLeftComponent(scrollPlane2);
 		
@@ -201,7 +210,24 @@ public class View {
 	
 	private void startInterpreting(){
 		try {
-			if (currentFile != null) {
+			boolean saved;
+			if (textChanged) {
+				// Create dialogue window to save file
+				Object[] options = {"Save", "Cancel"};
+				int optionSelected = JOptionPane.showOptionDialog(frmBarebonesInterpreterIde, "File needs to be saved before execution",
+				    "Save file", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+				if (optionSelected == 0) {
+					// If save file option chosen
+					saveFile();
+					saved = true;
+				} else {
+					saved = false;
+				}
+			} else {
+				saved = true;
+			}
+			
+			if (currentFile != null && saved) {
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
 				interpreter.start();
 				txtrWaiting.setText("");  // Reset text
@@ -226,9 +252,15 @@ public class View {
 	
 	private void saveFile() {
 		try {
-			FileWriter writer = new FileWriter(currentFile);
-			writer.write(editorPane.getText());
-			writer.close();
+			if (currentFile != null){
+				FileWriter writer = new FileWriter(currentFile);
+				writer.write(editorPane.getText());
+				writer.close();
+				textChanged = false; // Reset so prompt asking to save does not appear
+			} else {
+				// If not saved yet, then bring up save as dialogue
+				saveAs();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
