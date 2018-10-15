@@ -1,7 +1,7 @@
 package com.jack_parsons.barebones_interpreter;
 
 import java.awt.EventQueue;
-
+import java.io.FileWriter;
 import javax.swing.JFrame;
 import javax.swing.JButton;
 import java.awt.BorderLayout;
@@ -45,7 +45,7 @@ public class View {
 	private final JFileChooser fileExplorerWindow = new JFileChooser();
 	private JTextArea txtrWaiting;
 	private JEditorPane editorPane;
-	private File currentFile;
+	private File currentFile = null;
 	/**
 	 * @wbp.nonvisual location=-30,181
 	 */
@@ -108,6 +108,12 @@ public class View {
 		mnV.add(btnOpenFile_1);
 		
 		JButton btnSaveAs = new JButton("Save As");
+		btnSaveAs.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				saveAs();
+			}
+		});
 		btnSaveAs.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
@@ -115,6 +121,16 @@ public class View {
 		mnV.add(btnSaveAs);
 		
 		JButton btnSaveFile = new JButton("Save");
+		btnSaveFile.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (currentFile == null){
+					saveAs();
+				} else {
+					saveFile();
+				}
+			}
+		});
 		mnV.add(btnSaveFile);
 		
 		JButton btnNewButton = new JButton("Run");
@@ -174,11 +190,31 @@ public class View {
 		try {
 			Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
 			interpreter.start();
+			txtrWaiting.setText("");  // Reset text
 			txtrWaiting.append(interpreter.printMemory());
 		} catch (IOException e) {
 			txtrWaiting.setText("\nError starting interpreter");
 			System.out.println("Note");
 		}
-		
+	}
+	
+	private void saveAs () {
+		fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
+		int returnVal = fileExplorerWindow.showSaveDialog(frame);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileExplorerWindow.getSelectedFile();
+            currentFile = file;
+            saveFile();
+		}
+	}
+	
+	private void saveFile() {
+		try {
+			FileWriter writer = new FileWriter(currentFile);
+			writer.write(editorPane.getText());
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
