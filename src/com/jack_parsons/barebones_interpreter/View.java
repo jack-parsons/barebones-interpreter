@@ -38,14 +38,17 @@ import java.io.IOException;
 import javax.swing.JScrollBar;
 import java.awt.Color;
 import javax.swing.JSeparator;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class View {
 
-	private JFrame frame;
+	private JFrame frmBarebonesInterpreterIde;
 	private final JFileChooser fileExplorerWindow = new JFileChooser();
 	private JTextArea txtrWaiting;
 	private JEditorPane editorPane;
 	private File currentFile = null;
+	public final String windowTitle = "BareBones Interpreter";
 	/**
 	 * @wbp.nonvisual location=-30,181
 	 */
@@ -59,7 +62,7 @@ public class View {
 			public void run() {
 				try {
 					View window = new View();
-					window.frame.setVisible(true);
+					window.frmBarebonesInterpreterIde.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -78,12 +81,21 @@ public class View {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 720, 540);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frmBarebonesInterpreterIde = new JFrame();
+		frmBarebonesInterpreterIde.setTitle(windowTitle);
+		frmBarebonesInterpreterIde.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyChar() == KeyEvent.VK_META) {
+					System.out.println(1);
+				}
+			}
+		});
+		frmBarebonesInterpreterIde.setBounds(100, 100, 720, 540);
+		frmBarebonesInterpreterIde.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		JMenuBar menuBar = new JMenuBar();
-		frame.setJMenuBar(menuBar);
+		frmBarebonesInterpreterIde.setJMenuBar(menuBar);
 		
 		JMenu mnV = new JMenu("File");
 		menuBar.add(mnV);
@@ -93,11 +105,12 @@ public class View {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
-				int returnVal = fileExplorerWindow.showOpenDialog(frame);
+				int returnVal = fileExplorerWindow.showOpenDialog(frmBarebonesInterpreterIde);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 		            File file = fileExplorerWindow.getSelectedFile();
 		            updateEditorManager(file);
 		            currentFile = file;
+		    		frmBarebonesInterpreterIde.setTitle(file.toString() + " - " + windowTitle);
 				}
 			}
 		});
@@ -155,7 +168,7 @@ public class View {
 		splitPane.setBackground(Color.LIGHT_GRAY);
 		splitPane.setResizeWeight(0.9);
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
+		frmBarebonesInterpreterIde.getContentPane().add(splitPane, BorderLayout.CENTER);
 		
 		editorPane = new JEditorPane();
 		JScrollPane scrollPlane2 = new JScrollPane(editorPane);
@@ -188,10 +201,12 @@ public class View {
 	
 	private void startInterpreting(){
 		try {
-			Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
-			interpreter.start();
-			txtrWaiting.setText("");  // Reset text
-			txtrWaiting.append(interpreter.printMemory());
+			if (currentFile != null) {
+				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
+				interpreter.start();
+				txtrWaiting.setText("");  // Reset text
+				txtrWaiting.append(interpreter.printMemory());
+			}
 		} catch (IOException e) {
 			txtrWaiting.setText("\nError starting interpreter");
 			System.out.println("Note");
@@ -200,10 +215,11 @@ public class View {
 	
 	private void saveAs () {
 		fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
-		int returnVal = fileExplorerWindow.showSaveDialog(frame);
+		int returnVal = fileExplorerWindow.showSaveDialog(frmBarebonesInterpreterIde);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fileExplorerWindow.getSelectedFile();
             currentFile = file;
+    		frmBarebonesInterpreterIde.setTitle(file.toString() + " - " + windowTitle);
             saveFile();
 		}
 	}
