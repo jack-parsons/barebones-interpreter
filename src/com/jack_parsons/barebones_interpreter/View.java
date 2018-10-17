@@ -51,6 +51,7 @@ public class View {
 	private File currentFile = null;
 	private final String windowTitle = "BareBones Interpreter";
 	private boolean textChanged = true;
+	private InterpreterController interpeterController;
 	
 	/**
 	 * @wbp.nonvisual location=-30,181
@@ -86,16 +87,10 @@ public class View {
 	private void initialize() {
 		frmBarebonesInterpreterIde = new JFrame();
 		frmBarebonesInterpreterIde.setTitle(windowTitle);
-		frmBarebonesInterpreterIde.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyChar() == KeyEvent.VK_META) {
-					System.out.println(1);
-				}
-			}
-		});
 		frmBarebonesInterpreterIde.setBounds(100, 100, 900, 600);
 		frmBarebonesInterpreterIde.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		interpeterController = new InterpreterController();
 		
 		JMenuBar menuBar = new JMenuBar();
 		frmBarebonesInterpreterIde.setJMenuBar(menuBar);
@@ -227,11 +222,22 @@ public class View {
 				saved = true;
 			}
 			
-			if (currentFile != null && saved) {
+			if (currentFile != null && saved) {  // Needs to be saved to run
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
-				interpreter.start();
+				interpreter.addListener(new InterpreterListener(){
+					@Override
+					void outputEvent(String output) {
+						txtrWaiting.append(output);
+					}
+					@Override
+					void finishedEvent() {
+						txtrWaiting.append(interpreter.printMemory());
+						txtrWaiting.append(interpreter.printTimeTaken());
+					}
+				});
 				txtrWaiting.setText("");  // Reset text
-				txtrWaiting.append(interpreter.printMemory());
+				interpeterController.setInterpreter(interpreter);
+				interpeterController.start();
 			}
 		} catch (IOException e) {
 			txtrWaiting.setText("\nError starting interpreter");

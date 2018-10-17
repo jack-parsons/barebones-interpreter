@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
 
-public class Interpreter {
+public class Interpreter{
 	private BufferedReader barebonesBufferedReader;
 	private ArrayList<String[]> barebonesCode;
 	private int currentLine;
@@ -12,19 +12,20 @@ public class Interpreter {
 	private HashMap<Integer, Integer> whileJumps;
 	private Stack<Integer> whileStack = new Stack<Integer>();
 	private float timeTaken;
+	private ArrayList<InterpreterListener> listeners = new ArrayList<InterpreterListener>();
 	
 	Interpreter (BufferedReader barebonesBufferedReader) {
 		// barebonesBufferedReader is the BufferedReader for the file containing the source code
 		this.barebonesBufferedReader = barebonesBufferedReader;
 		this.barebonesCode = new ArrayList<String[]>();
 		timeTaken = -1; // Initialise timeTaken so if printTimeTaken is called before start it doesn't cause an exception
+		variableNamespace = new HashMap<String, Integer>();
 	}
 	
 	public void start () {
 		// Starts execution of the barebones code
 		long startTime = System.nanoTime();
 		processFile();
-		variableNamespace = new HashMap<String, Integer>();
 		currentLine = 0;
 		while (currentLine < barebonesCode.size()) {
 			executeLine(barebonesCode.get(currentLine), currentLine);
@@ -32,6 +33,25 @@ public class Interpreter {
 		}
 		// Calculate the time taken to execute program
 		timeTaken = (float)(System.nanoTime() - startTime)/1000000;
+		finishedEvent();
+	}
+	
+	public void addListener(InterpreterListener listener){
+		listeners.add(listener);
+	}
+	
+	private void finishedEvent() {
+		// Notify all listeners that the program has finished
+		for (InterpreterListener listener : listeners) {
+			listener.finishedEvent();
+		}
+	}
+	
+	private void outputString(String output) {
+		// Notify all listeners that there has been an output
+		for (InterpreterListener listener : listeners) {
+			listener.outputEvent(output);
+		}
 	}
 	
 	public String printTimeTaken(){
@@ -54,9 +74,9 @@ public class Interpreter {
 		 * If lineNumber is -1, the line number does not print.
 		 * Terminates the program after printing message. */
 		if (lineNumber != -1){
-			System.out.println("\nError on line:" + (lineNumber + 1));
+			outputString("\nError on line:" + (lineNumber + 1));
 		}
-		System.out.println(message);
+		outputString(message);
 		System.exit(1);
 	}
 	
@@ -110,7 +130,7 @@ public class Interpreter {
 			}
 			processWhileJumpPoints();
 		} catch (IOException e) {
-			System.out.println("Error reading text file");
+			outputString("Error reading text file");
 			e.printStackTrace();
 		}
 	}
