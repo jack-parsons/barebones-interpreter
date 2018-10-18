@@ -7,6 +7,7 @@ import javax.swing.JButton;
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 import javax.swing.JSplitPane;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
@@ -20,6 +21,10 @@ import javax.swing.BoxLayout;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.JScrollPane;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -36,6 +41,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+
 import javax.swing.JScrollBar;
 import java.awt.Color;
 import javax.swing.JSeparator;
@@ -46,12 +53,13 @@ public class View {
 
 	private JFrame frmBarebonesInterpreterIde;
 	private final JFileChooser fileExplorerWindow = new JFileChooser();
-	private JTextArea txtrWaiting;
-	private JEditorPane editorPane;
+	private JTextArea consolePane;
+	private JTextPane codePane;
 	private File currentFile = null;
 	private final String windowTitle = "BareBones Interpreter";
 	private boolean textChanged = true;
 	private InterpreterController interpeterController;
+	private StyledDocument codePaneDocument;
 	
 	/**
 	 * @wbp.nonvisual location=-30,181
@@ -95,11 +103,11 @@ public class View {
 		JMenuBar menuBar = new JMenuBar();
 		frmBarebonesInterpreterIde.setJMenuBar(menuBar);
 		
-		JMenu mnV = new JMenu("File");
-		menuBar.add(mnV);
+		JMenu fileButton = new JMenu("File");
+		menuBar.add(fileButton);
 		
-		JButton btnOpenFile_1 = new JButton("Open File");
-		btnOpenFile_1.addMouseListener(new MouseAdapter() {
+		JButton openFileButton = new JButton("Open File");
+		openFileButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
@@ -112,27 +120,31 @@ public class View {
 				}
 			}
 		});
-		btnOpenFile_1.addActionListener(new ActionListener() {
+		openFileButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
-		mnV.add(btnOpenFile_1);
+		fileButton.add(openFileButton);
 		
-		JButton btnSaveAs = new JButton("Save As");
-		btnSaveAs.addMouseListener(new MouseAdapter() {
+		JButton saveAsButton = new JButton("Save As");
+		saveAsButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				saveAs();
 			}
 		});
-		btnSaveAs.addActionListener(new ActionListener() {
+		saveAsButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
-		mnV.add(btnSaveAs);
+		fileButton.add(saveAsButton);
 		
-		JButton btnSaveFile = new JButton("Save");
-		btnSaveFile.addMouseListener(new MouseAdapter() {
+		JButton saveButton = new JButton("Save");
+		saveButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		saveButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (currentFile == null){
@@ -142,24 +154,24 @@ public class View {
 				}
 			}
 		});
-		mnV.add(btnSaveFile);
+		fileButton.add(saveButton);
 		
-		JButton btnNewButton = new JButton("Run");
-		btnNewButton.setToolTipText("");
-		btnNewButton.addMouseListener(new MouseAdapter() {
+		JButton runButton = new JButton("Run");
+		runButton.setToolTipText("");
+		runButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				startInterpreting();
 			}
 		});
-		btnNewButton.addActionListener(new ActionListener() {
+		runButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
 		
 		JSeparator separator = new JSeparator();
 		menuBar.add(separator);
-		menuBar.add(btnNewButton);
+		menuBar.add(runButton);
 		
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setOneTouchExpandable(true);
@@ -168,24 +180,41 @@ public class View {
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		frmBarebonesInterpreterIde.getContentPane().add(splitPane, BorderLayout.CENTER);
 		
-		editorPane = new JEditorPane();
-		editorPane.addKeyListener(new KeyAdapter() {
+		codePane = new JTextPane();
+		codePane.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyTyped(KeyEvent e) {
 				textChanged = true;  // Now prompt will appear asking to save
+				
+				refreshDocument();
 			}
 		});
-		JScrollPane scrollPlane2 = new JScrollPane(editorPane);
+        codePaneDocument = codePane.getStyledDocument();
+        // Set up different styling for code
+        Style instructionStyle = codePane.addStyle("instruction style", null);
+        StyleConstants.setForeground(instructionStyle, Color.BLUE);
+        
+		JScrollPane scrollPlane2 = new JScrollPane(codePane);
 		splitPane.setLeftComponent(scrollPlane2);
-		
-		txtrWaiting = new JTextArea();
-		txtrWaiting.setEditable(false);
-		txtrWaiting.setText("waiting...");
-		JScrollPane scrollPlane1 = new JScrollPane(txtrWaiting);
+		consolePane = new JTextArea();
+		consolePane.setEditable(false);
+		consolePane.setText("waiting...");
+		JScrollPane scrollPlane1 = new JScrollPane(consolePane);
 		splitPane.setRightComponent(scrollPlane1);
 	}
 	
+	private void refreshDocument() {
+		// Refresh all the colouring
+		try {
+			String docText = codePaneDocument.getText(0, codePaneDocument.getLength());
+			ArrayList<CodeHighlightSection> sections = Interpreter.sytaxHighlighingProcessing(docText);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void updateEditorManager(File file) {
+		
 		try {
 			BufferedReader bareboneBufferedReader = new BufferedReader(new FileReader(file));
 			String line;
@@ -196,7 +225,7 @@ public class View {
 					fileText.append(line+"\n");
 				}
 			} while (line != null);
-			editorPane.setText(fileText.toString());
+			codePane.setText(fileText.toString());
 			bareboneBufferedReader.close();
 		} catch (IOException e) {
 			System.out.println("Error reading file");
@@ -227,20 +256,20 @@ public class View {
 				interpreter.addListener(new InterpreterListener(){
 					@Override
 					void outputEvent(String output) {
-						txtrWaiting.append(output);
+						consolePane.append(output);
 					}
 					@Override
 					void finishedEvent() {
-						txtrWaiting.append(interpreter.printMemory());
-						txtrWaiting.append(interpreter.printTimeTaken());
+						consolePane.append(interpreter.printMemory());
+						consolePane.append(interpreter.printTimeTaken());
 					}
 				});
-				txtrWaiting.setText("");  // Reset text
+				consolePane.setText("");  // Reset text
 				interpeterController.setInterpreter(interpreter);
 				interpeterController.start();
 			}
 		} catch (IOException e) {
-			txtrWaiting.setText("\nError starting interpreter");
+			consolePane.setText("\nError starting interpreter");
 			System.out.println("Note");
 		}
 	}
@@ -260,7 +289,7 @@ public class View {
 		try {
 			if (currentFile != null){
 				FileWriter writer = new FileWriter(currentFile);
-				writer.write(editorPane.getText());
+				writer.write(codePane.getText());
 				writer.close();
 				textChanged = false; // Reset so prompt asking to save does not appear
 			} else {

@@ -103,6 +103,45 @@ public class Interpreter{
 		}
 	}
 	
+	public static ArrayList<CodeHighlightSection> sytaxHighlighingProcessing(String code){
+		ArrayList<CodeHighlightSection> sections = new ArrayList<CodeHighlightSection>();
+		String[] codeLines = code.split("\n");
+		for (int lineNumber = 0; lineNumber < codeLines.length; lineNumber ++) {
+			for (String lines2 : codeLines[lineNumber].split(";")){
+				// Do this so semicolon can allow multiple commands on one line
+				lines2 = lines2.trim(); // Trim whitespace such as tabs
+				if (lines2.length() > 0){
+					// Check that the line is not empty before adding it to processed code
+					// Also split the line into parts
+					String[] lineParts = splitLineIntoParts(lines2);
+					if (correctArguments(lineParts)) {
+						for (int p = 0; p < lineParts.length; p ++){
+							CodeHighlightSection.sectionType type = Interpreter.findSectionType(lineParts[p], p);
+							sections.add(new CodeHighlightSection(lineParts[p], type));
+						}
+						lineNumber ++;
+					}
+				}	
+			}
+		}
+		return sections;
+	}
+	
+	private static CodeHighlightSection.sectionType findSectionType (String part, int position) {
+		switch (part) {
+		case "clear":
+		case "incr":
+		case "decr":
+		case "while":
+		case "end":
+			if (position == 0) {
+				// Only an instruction if at start of line
+				return CodeHighlightSection.sectionType.INSTR;
+			}
+		}
+		return CodeHighlightSection.sectionType.NORM;
+	}
+	
 	private void processFile(){
 		// Transfer all barebones code into string ArrayList for fast access 
 		try {
