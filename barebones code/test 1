@@ -1,6 +1,7 @@
-clear X;incr X;
+clear X;
 incr X;
 incr X;
-while X not 1 do;
+incr X;
+while X not 2 do;
 decr X;
 end;

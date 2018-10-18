@@ -1,5 +1,6 @@
 package com.jack_parsons.barebones_interpreter;
 
+// A section of code that is highlighted in the same way
 public class CodeHighlightSection {
 	public enum sectionType {
 		INSTR, NORM

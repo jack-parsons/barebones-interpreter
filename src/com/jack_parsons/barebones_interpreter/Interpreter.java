@@ -37,6 +37,7 @@ public class Interpreter{
 	}
 	
 	public void addListener(InterpreterListener listener){
+		// Add a listener
 		listeners.add(listener);
 	}
 	
@@ -104,6 +105,8 @@ public class Interpreter{
 	}
 	
 	public static ArrayList<CodeHighlightSection> sytaxHighlighingProcessing(String code){
+		// Split the code into parts that are highlighted differently
+		// Not fully implemented yet
 		ArrayList<CodeHighlightSection> sections = new ArrayList<CodeHighlightSection>();
 		String[] codeLines = code.split("\n");
 		for (int lineNumber = 0; lineNumber < codeLines.length; lineNumber ++) {
@@ -128,6 +131,7 @@ public class Interpreter{
 	}
 	
 	private static CodeHighlightSection.sectionType findSectionType (String part, int position) {
+		// Determine the highlighting type for a section
 		switch (part) {
 		case "clear":
 		case "incr":
