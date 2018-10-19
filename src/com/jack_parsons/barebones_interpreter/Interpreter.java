@@ -24,16 +24,20 @@ public class Interpreter{
 	
 	public void start () {
 		// Starts execution of the barebones code
-		long startTime = System.nanoTime();
-		processFile();
-		currentLine = 0;
-		while (currentLine < barebonesCode.size()) {
-			executeLine(barebonesCode.get(currentLine), currentLine);
-			currentLine ++;
+		try {
+			long startTime = System.nanoTime();
+			processFile();
+			currentLine = 0;
+			while (currentLine < barebonesCode.size()) {
+				executeLine(barebonesCode.get(currentLine), currentLine);
+				currentLine ++;
+			}
+			// Calculate the time taken to execute program
+			timeTaken = (float)(System.nanoTime() - startTime)/1000000;
+			finishedEvent();
+		} catch (Exception e){
+			errorMessage("An unknown error occured", -1);
 		}
-		// Calculate the time taken to execute program
-		timeTaken = (float)(System.nanoTime() - startTime)/1000000;
-		finishedEvent();
 	}
 	
 	public void addListener(InterpreterListener listener){
@@ -77,8 +81,8 @@ public class Interpreter{
 		if (lineNumber != -1){
 			outputString("\nError on line:" + (lineNumber + 1));
 		}
-		outputString(message);
-		System.exit(1);
+		outputString("\n"+message);
+//		System.exit(1);
 	}
 	
 	private void processWhileJumpPoints() {
