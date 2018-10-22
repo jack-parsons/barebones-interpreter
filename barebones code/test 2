@@ -14,7 +14,7 @@ while X not 0 do;
       decr Y;
    end;
    while W not 0 do;
-      incr Y;
+      incr Y; 
       decr W;
    end;
    decr X;

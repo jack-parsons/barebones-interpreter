@@ -1,6 +1,7 @@
 package com.jack_parsons.barebones_interpreter;
 
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.io.FileWriter;
 import javax.swing.JFrame;
 import javax.swing.JButton;
@@ -41,9 +42,11 @@ public class View {
 	private File currentFile = null;
 	private final String windowTitle = "BareBones Interpreter";
 	private boolean codeChanged = true;
-	private InterpreterController interpeterController;
+	private InterpreterController interpreterController;
 	private StyledDocument codePaneDocument;
 	private final JPanel panel = new JPanel();
+	private JButton runButton;
+	private JButton stepButton;
 	
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -68,7 +71,7 @@ public class View {
 		frmBarebonesInterpreterIde.setBounds(100, 100, 900, 600);
 		frmBarebonesInterpreterIde.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		interpeterController = new InterpreterController();
+		interpreterController = new InterpreterController();
 
 		JMenuBar menuBar = new JMenuBar();
 		frmBarebonesInterpreterIde.setJMenuBar(menuBar);
@@ -131,7 +134,7 @@ public class View {
 		fileButton.add(saveButton);
 		
 		// Create the run button
-		JButton runButton = new JButton("Run");
+		runButton = new JButton("Run");
 		runButton.setToolTipText("");
 		runButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -147,6 +150,35 @@ public class View {
 		// Create the menu bar and add the elements to it
 		JSeparator separator = new JSeparator();
 		menuBar.add(separator);
+		
+		// Create step button
+		stepButton = new JButton("Step");
+		stepButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (!interpreterController.isRunning()){
+					startStepping();
+				} else {
+					interpreterController.step();
+				}
+			}
+		});
+		stepButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		
+		// Create stop button
+		JButton stopButton = new JButton("Stop");
+		stopButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// Stop the execution
+				interpreterController.stopRunning();
+			}
+		});
+		menuBar.add(stopButton);
+		menuBar.add(stepButton);
 		menuBar.add(runButton);
 		
 		JSplitPane splitPane = new JSplitPane();
@@ -210,25 +242,64 @@ public class View {
 		}
 	}
 	
+	private boolean checkSaved () {
+		boolean saved;
+		if (codeChanged) {
+			// Create dialogue window to save file
+			Object[] options = {"Save", "Cancel"};
+			int optionSelected = JOptionPane.showOptionDialog(frmBarebonesInterpreterIde, "File needs to be saved before execution",
+			    "Save file", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+			if (optionSelected == 0) {
+				// If save file option chosen
+				saveFile();
+				saved = true;
+			} else {
+				saved = false;
+			}
+		} else {
+			saved = true;
+		}
+		return saved;
+	}
+	
+	private void startStepping(){
+		try {
+			boolean saved = checkSaved();
+			if (currentFile != null && saved) {  // Needs to be saved first to run
+				runButton.setEnabled(false); // Disable run button
+				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
+				interpreter.addListener(new InterpreterListener(){
+					@Override
+					void outputEvent(String output) {
+						printToConsole(output);
+					}
+					@Override
+					void finishedEvent() {
+						// When the code has finished, print the memory and the time taken
+						printToConsole(interpreter.printMemory());
+						runButton.setEnabled(true);
+					}
+					@Override
+					void finishedStepEvent() {
+						// When the code has finished a step, print the memory and the time taken
+						stepButton.setEnabled(true);
+					}
+				});
+				consolePane.setText("");  // Reset text
+				interpreterController.setInterpreter(interpreter);
+				interpreterController.setStepping(true);
+				interpreterController.start();
+				interpreterController.step();
+			}
+		} catch (IOException e) {
+			consolePane.setText("\nError starting interpreter");
+		}
+	}
+	
 	private void startInterpreting(){
 		// Starts interpreting the code when the run button is clicked
 		try {
-			boolean saved;
-			if (codeChanged) {
-				// Create dialogue window to save file
-				Object[] options = {"Save", "Cancel"};
-				int optionSelected = JOptionPane.showOptionDialog(frmBarebonesInterpreterIde, "File needs to be saved before execution",
-				    "Save file", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-				if (optionSelected == 0) {
-					// If save file option chosen
-					saveFile();
-					saved = true;
-				} else {
-					saved = false;
-				}
-			} else {
-				saved = true;
-			}
+			boolean saved = checkSaved();
 			
 			if (currentFile != null && saved) {  // Needs to be saved first to run
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
@@ -246,12 +317,12 @@ public class View {
 					}
 				});
 				consolePane.setText("");  // Reset text
-				interpeterController.setInterpreter(interpreter);
-				interpeterController.start();
+				interpreterController.setInterpreter(interpreter);
+				interpreterController.setStepping(true);
+				interpreterController.start();
 			}
 		} catch (IOException e) {
 			consolePane.setText("\nError starting interpreter");
-			System.out.println("Note");
 		}
 	}
 	

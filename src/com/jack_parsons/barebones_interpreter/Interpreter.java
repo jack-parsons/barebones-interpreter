@@ -13,6 +13,7 @@ public class Interpreter{
 	private Stack<Integer> whileStack = new Stack<Integer>();
 	private float timeTaken;
 	private ArrayList<InterpreterListener> listeners = new ArrayList<InterpreterListener>();
+	private boolean stopping;
 	
 	Interpreter (BufferedReader barebonesBufferedReader) {
 		// barebonesBufferedReader is the BufferedReader for the file containing the source code
@@ -20,21 +21,33 @@ public class Interpreter{
 		this.barebonesCode = new ArrayList<String[]>();
 		timeTaken = -1; // Initialise timeTaken so if printTimeTaken is called before start it doesn't cause an exception
 		variableNamespace = new HashMap<String, Integer>();
+		stopping = false;
 	}
 	
-	public void start () {
+	public void step () {
+		executeLine(barebonesCode.get(currentLine), currentLine);
+		currentLine ++;
+		finishedStepEvent();
+		if (currentLine >= barebonesCode.size()){
+			finishedEvent();
+		}
+	}
+	
+	public void start (boolean stepping) {
 		// Starts execution of the barebones code
 		try {
 			long startTime = System.nanoTime();
 			processFile();
 			currentLine = 0;
-			while (currentLine < barebonesCode.size()) {
-				executeLine(barebonesCode.get(currentLine), currentLine);
-				currentLine ++;
+			if (!stepping) {
+				while (currentLine < barebonesCode.size() && !stopping) {
+					executeLine(barebonesCode.get(currentLine), currentLine);
+					currentLine ++;
+				}
+				// Calculate the time taken to execute program
+				timeTaken = (float)(System.nanoTime() - startTime)/1000000;
+				finishedEvent();
 			}
-			// Calculate the time taken to execute program
-			timeTaken = (float)(System.nanoTime() - startTime)/1000000;
-			finishedEvent();
 		} catch (Exception e){
 			errorMessage("An unknown error occured", -1);
 		}
@@ -50,6 +63,20 @@ public class Interpreter{
 		for (InterpreterListener listener : listeners) {
 			listener.finishedEvent();
 		}
+		stopping = false;
+	}
+	
+	private void finishedStepEvent() {
+		// Notify all listeners that the step has finished
+		for (InterpreterListener listener : listeners) {
+			listener.finishedStepEvent();
+		}
+	}
+	
+	public void stop () {
+		// Stop the execution
+		stopping = true;
+		finishedEvent();
 	}
 	
 	private void outputString(String output) {

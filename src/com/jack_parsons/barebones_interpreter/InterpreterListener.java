@@ -8,4 +8,5 @@ package com.jack_parsons.barebones_interpreter;
 public class InterpreterListener {
 	void outputEvent(String output){} // Called when there is some output from the interpreter
 	void finishedEvent(){} // Called when the interpreter has finished
+	void finishedStepEvent(){} // Called when the interpreter has finished
 }
