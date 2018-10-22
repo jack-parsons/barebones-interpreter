@@ -2,18 +2,24 @@ package com.jack_parsons.barebones_interpreter;
 
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.io.FileWriter;
 import javax.swing.JFrame;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
 import javax.swing.JSplitPane;
 import javax.swing.JFileChooser;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -29,6 +35,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.awt.Color;
+import java.awt.Event;
+
 import javax.swing.JSeparator;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -203,6 +211,8 @@ public class View {
         Style instructionStyle = codePane.addStyle("instruction style", null);
         StyleConstants.setForeground(instructionStyle, Color.BLUE);
         
+        addKeyboardShortcuts();
+        
         // Create the console
 		JScrollPane scrollPlane2 = new JScrollPane(codePane);
 		splitPane.setLeftComponent(scrollPlane2);
@@ -211,6 +221,32 @@ public class View {
 		consolePane.setText("waiting...");
 		JScrollPane scrollPlane1 = new JScrollPane(consolePane);
 		splitPane.setRightComponent(scrollPlane1);
+	}
+	
+	private void addKeyboardShortcuts() {
+        // Add keyboard shortcuts
+		
+		// Save shortcut
+        InputMap inputMap = codePane.getInputMap();
+        KeyStroke key = KeyStroke.getKeyStroke(KeyEvent.VK_S,
+        		Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+        inputMap.put(key, new AbstractAction() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		saveFile();
+        	}
+        });
+
+		// Run shortcut
+        inputMap = codePane.getInputMap();
+        key = KeyStroke.getKeyStroke(KeyEvent.VK_R,
+        		Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+        inputMap.put(key, new AbstractAction() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		startInterpreting();
+        	}
+        });
 	}
 	
 	private void refreshDocument() {
