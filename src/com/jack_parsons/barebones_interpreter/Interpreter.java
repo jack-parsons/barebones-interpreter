@@ -47,6 +47,9 @@ public class Interpreter{
 				// Calculate the time taken to execute program
 				timeTaken = (float)(System.nanoTime() - startTime)/1000000;
 				finishedEvent();
+			} else {
+				// Step once to start
+				step();
 			}
 		} catch (Exception e){
 			errorMessage("An unknown error occured", -1);

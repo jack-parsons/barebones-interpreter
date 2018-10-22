@@ -267,6 +267,7 @@ public class View {
 			boolean saved = checkSaved();
 			if (currentFile != null && saved) {  // Needs to be saved first to run
 				runButton.setEnabled(false); // Disable run button
+				stepButton.setEnabled(false); // Disable run button
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
 				interpreter.addListener(new InterpreterListener(){
 					@Override
@@ -289,7 +290,6 @@ public class View {
 				interpreterController.setInterpreter(interpreter);
 				interpreterController.setStepping(true);
 				interpreterController.start();
-				interpreterController.step();
 			}
 		} catch (IOException e) {
 			consolePane.setText("\nError starting interpreter");
@@ -300,7 +300,8 @@ public class View {
 		// Starts interpreting the code when the run button is clicked
 		try {
 			boolean saved = checkSaved();
-			
+			stepButton.setEnabled(false);
+			runButton.setEnabled(false);
 			if (currentFile != null && saved) {  // Needs to be saved first to run
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
 				// The listener is listening for output from the interpreter
@@ -314,11 +315,13 @@ public class View {
 						// When the code has finished, print the memory and the time taken
 						printToConsole(interpreter.printMemory());
 						printToConsole(interpreter.printTimeTaken());
+						stepButton.setEnabled(true);
+						runButton.setEnabled(true);
 					}
 				});
 				consolePane.setText("");  // Reset text
 				interpreterController.setInterpreter(interpreter);
-				interpreterController.setStepping(true);
+				interpreterController.setStepping(false);
 				interpreterController.start();
 			}
 		} catch (IOException e) {
