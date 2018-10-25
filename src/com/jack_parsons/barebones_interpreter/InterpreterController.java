@@ -18,13 +18,13 @@ public class InterpreterController extends Thread {
 	   public void run() {
 		   // This is run in a different thread so that it doesn't cause a hang
 		   setRunning(true);
-		   interpreter.start(stepping);
 		   interpreter.addListener(new InterpreterListener() {
 			   @Override
 			   public void finishedEvent () {
 				   setRunning(false);
 			   }
 		   });
+		   interpreter.start(stepping);
 	   }
 	   
 	   private void setRunning(boolean value) {
@@ -46,6 +46,14 @@ public class InterpreterController extends Thread {
 	   
 	   public void setStepping(boolean stepping) {
 		   this.stepping = stepping;
+	   }
+	   
+	   public int getCurrentLine() {
+		   return interpreter.getCurrentLine();
+	   }
+	   
+	   public int getLastLine() {
+		   return interpreter.getLastLine();
 	   }
 	   
 	   public void start() {

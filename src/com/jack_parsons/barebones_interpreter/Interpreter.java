@@ -7,7 +7,7 @@ import java.util.*;
 public class Interpreter{
 	private BufferedReader barebonesBufferedReader;
 	private ArrayList<String[]> barebonesCode;
-	private int currentLine;
+	private int currentLine, lastLine;
 	private HashMap<String, Integer> variableNamespace;
 	private HashMap<Integer, Integer> whileJumps;
 	private Stack<Integer> whileStack = new Stack<Integer>();
@@ -25,12 +25,22 @@ public class Interpreter{
 	}
 	
 	public void step () {
+		// Execute a single line
 		executeLine(barebonesCode.get(currentLine), currentLine);
-		currentLine ++;
 		finishedStepEvent();
 		if (currentLine >= barebonesCode.size()){
 			finishedEvent();
 		}
+		incrementLine();
+	}
+	
+	private void setCurrentLine(int value) {
+		currentLine = value;
+	}
+	
+	private void incrementLine() {
+		lastLine = currentLine;
+		setCurrentLine(currentLine+1);
 	}
 	
 	public void start (boolean stepping) {
@@ -38,22 +48,27 @@ public class Interpreter{
 		try {
 			long startTime = System.nanoTime();
 			processFile();
-			currentLine = 0;
+			setCurrentLine(0);
 			if (!stepping) {
 				while (currentLine < barebonesCode.size() && !stopping) {
 					executeLine(barebonesCode.get(currentLine), currentLine);
-					currentLine ++;
+					incrementLine();
 				}
 				// Calculate the time taken to execute program
 				timeTaken = (float)(System.nanoTime() - startTime)/1000000;
 				finishedEvent();
-			} else {
-				// Step once to start
-				step();
 			}
 		} catch (Exception e){
 			errorMessage("An unknown error occured", -1);
 		}
+	}
+	
+	public int getCurrentLine() {
+		return currentLine;
+	}
+	
+	public int getLastLine() {
+		return lastLine;
 	}
 	
 	public void addListener(InterpreterListener listener){
@@ -273,7 +288,7 @@ public class Interpreter{
 	
 	private void endStatement(){
 		// Return to the line before the last while loop
-		currentLine = whileStack.pop()-1;
+		setCurrentLine(whileStack.pop()-1);
 	}
 	
 	private void startWhile(String varName, String Operator, String conditionValue) {
@@ -297,7 +312,7 @@ public class Interpreter{
 		if (conditionMet) {
 			whileStack.add(currentLine);
 		} else {
-			currentLine = whileJumps.get(currentLine);
+			setCurrentLine(whileJumps.get(currentLine));
 		}
 	}
 

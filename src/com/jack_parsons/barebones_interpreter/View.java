@@ -249,6 +249,46 @@ public class View {
         });
 	}
 	
+	private ArrayList<Integer> getlineNumberPositions(String text) {
+		// Find the positions of all the line 
+		ArrayList<Integer> lineNumberPositions = new ArrayList<Integer>();
+		lineNumberPositions.add(0); // Line 0 at beginning
+		int length = 0;
+		for (int i = 0; i < text.length(); i++) {
+			if (text.charAt(i) == '\n') {
+				if (length > 0){
+					lineNumberPositions.add(i);
+				}
+			} else if (text.charAt(i) != ' ' && text.charAt(i) != '\t' ) {
+				length ++; // Check that line has text on it
+			}
+		}
+		return lineNumberPositions;
+	}
+	
+	private void updateCurrentLine(int currentLine, int oldLine) {
+		// Change swap the currently running line highlighting
+		try {
+			String text = codePaneDocument.getText(0, codePaneDocument.getLength());
+			ArrayList<Integer> lineNumberPositions = getlineNumberPositions(text);
+			String temp1 = text.substring(lineNumberPositions.get(oldLine), lineNumberPositions.get(oldLine+1));
+			String temp2 = text.substring(lineNumberPositions.get(currentLine), lineNumberPositions.get(currentLine+1));
+			
+			codePaneDocument.remove(lineNumberPositions.get(oldLine), lineNumberPositions.get(oldLine+1) - lineNumberPositions.get(oldLine));
+	        Style style1 = codePane.addStyle("instruction style", null);
+	        StyleConstants.setBackground(style1, Color.WHITE);
+			codePaneDocument.insertString(lineNumberPositions.get(oldLine), temp1, style1);
+			
+			codePaneDocument.remove(lineNumberPositions.get(currentLine), lineNumberPositions.get(currentLine+1) - lineNumberPositions.get(currentLine));
+	        Style style2 = codePane.addStyle("instruction style", null);
+	        StyleConstants.setBackground(style2, Color.BLUE);
+			codePaneDocument.insertString(lineNumberPositions.get(currentLine), temp2, style2);
+			
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void refreshDocument() {
 		// Refresh all the colouring of the code
 		try {
@@ -303,7 +343,7 @@ public class View {
 			boolean saved = checkSaved();
 			if (currentFile != null && saved) {  // Needs to be saved first to run
 				runButton.setEnabled(false); // Disable run button
-				stepButton.setEnabled(false); // Disable run button
+//				stepButton.setEnabled(false); // Disable run button
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
 				interpreter.addListener(new InterpreterListener(){
 					@Override
@@ -315,13 +355,17 @@ public class View {
 						// When the code has finished, print the memory and the time taken
 						printToConsole(interpreter.printMemory());
 						runButton.setEnabled(true);
+						
 					}
 					@Override
 					void finishedStepEvent() {
 						// When the code has finished a step, print the memory and the time taken
 						stepButton.setEnabled(true);
+						updateCurrentLine(interpreterController.getCurrentLine(), interpreterController.getLastLine());
+						System.out.println(interpreterController.getLastLine());
 					}
 				});
+//				updateCurrentLine(0, 0);
 				consolePane.setText("");  // Reset text
 				interpreterController.setInterpreter(interpreter);
 				interpreterController.setStepping(true);
@@ -336,7 +380,8 @@ public class View {
 		// Starts interpreting the code when the run button is clicked
 		try {
 			boolean saved = checkSaved();
-			stepButton.setEnabled(false);
+//			stepButton.setEnabled(false);
+			
 			runButton.setEnabled(false);
 			if (currentFile != null && saved) {  // Needs to be saved first to run
 				Interpreter interpreter = new Interpreter(new BufferedReader(new FileReader(currentFile)));
