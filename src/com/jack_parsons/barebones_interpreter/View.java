@@ -40,6 +40,7 @@ import java.awt.Event;
 import javax.swing.JSeparator;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import javax.swing.JLabel;
 
 public class View {
 
@@ -90,17 +91,11 @@ public class View {
 		
 		// Create the open file button
 		JButton openFileButton = new JButton("Open File");
+		openFileButton.setToolTipText("Shortcut ⌘o");
 		openFileButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
-				int returnVal = fileExplorerWindow.showOpenDialog(frmBarebonesInterpreterIde);
-				if (returnVal == JFileChooser.APPROVE_OPTION) {
-		            File file = fileExplorerWindow.getSelectedFile();
-		            updateEditorManager(file);
-		            currentFile = file;
-		    		frmBarebonesInterpreterIde.setTitle(file.toString() + " - " + windowTitle);
-				}
+				openFile();
 			}
 		});
 		openFileButton.addActionListener(new ActionListener() {
@@ -125,6 +120,7 @@ public class View {
 		
 		// Create the save button
 		JButton saveButton = new JButton("Save");
+		saveButton.setToolTipText("Shortcut ⌘s");
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
@@ -143,7 +139,7 @@ public class View {
 		
 		// Create the run button
 		runButton = new JButton("Run");
-		runButton.setToolTipText("");
+		runButton.setToolTipText("Shortcut ⌘r");
 		runButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -161,6 +157,7 @@ public class View {
 		
 		// Create step button
 		stepButton = new JButton("Step");
+		stepButton.setToolTipText("Shortcut: ⌘→");
 		stepButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -178,6 +175,7 @@ public class View {
 		
 		// Create stop button
 		JButton stopButton = new JButton("Stop");
+		stopButton.setToolTipText("Shortcut ⌘s");
 		stopButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -223,6 +221,18 @@ public class View {
 		splitPane.setRightComponent(scrollPlane1);
 	}
 	
+	private void openFile() {
+		// Opens the current file and puts it onto the code panel
+		fileExplorerWindow.setCurrentDirectory(new File(System.getProperty("user.dir")+"/barebones code/"));
+		int returnVal = fileExplorerWindow.showOpenDialog(frmBarebonesInterpreterIde);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fileExplorerWindow.getSelectedFile();
+            updateEditorManager(file);
+            currentFile = file;
+    		frmBarebonesInterpreterIde.setTitle(file.toString() + " - " + windowTitle);
+		}
+	}
+	
 	private void addKeyboardShortcuts() {
         // Add keyboard shortcuts
 		
@@ -245,6 +255,42 @@ public class View {
         	@Override
         	public void actionPerformed(ActionEvent e) {
         		startInterpreting();
+        	}
+        });
+
+		// Open shortcut
+        inputMap = codePane.getInputMap();
+        key = KeyStroke.getKeyStroke(KeyEvent.VK_O,
+        		Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+        inputMap.put(key, new AbstractAction() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		openFile();
+        	}
+        });
+
+		// Stop shortcut
+        inputMap = codePane.getInputMap();
+        key = KeyStroke.getKeyStroke(KeyEvent.VK_S,
+        		Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+        inputMap.put(key, new AbstractAction() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		interpreterController.stopRunning();
+        	}
+        });
+		// Step shortcut
+        inputMap = codePane.getInputMap();
+        key = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,
+        		Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+        inputMap.put(key, new AbstractAction() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		if (!interpreterController.isRunning()){
+        			startStepping();
+        		} else {
+        			interpreterController.step();
+        		}
         	}
         });
 	}

@@ -142,8 +142,7 @@ public class Interpreter{
 			if (line[0].equals("while")){
 				// Put this while loop line number at the top of the stack
 				jumpPositions.add(lineNumber);
-			}
-			if (line[0].equals("if")){
+			} else if (line[0].equals("if")){
 				// Put this if statement line number at the top of the stack
 				jumpPositions.add(lineNumber);
 			} else if (line[0].equals("end")){
