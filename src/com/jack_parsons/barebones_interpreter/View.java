@@ -271,18 +271,23 @@ public class View {
 		try {
 			String text = codePaneDocument.getText(0, codePaneDocument.getLength());
 			ArrayList<Integer> lineNumberPositions = getlineNumberPositions(text);
-			String temp1 = text.substring(lineNumberPositions.get(oldLine), lineNumberPositions.get(oldLine+1));
-			String temp2 = text.substring(lineNumberPositions.get(currentLine), lineNumberPositions.get(currentLine+1));
 			
+			// Remove the old background
+			String temp1 = text.substring(lineNumberPositions.get(oldLine), lineNumberPositions.get(oldLine+1));
 			codePaneDocument.remove(lineNumberPositions.get(oldLine), lineNumberPositions.get(oldLine+1) - lineNumberPositions.get(oldLine));
 	        Style style1 = codePane.addStyle("instruction style", null);
 	        StyleConstants.setBackground(style1, Color.WHITE);
 			codePaneDocument.insertString(lineNumberPositions.get(oldLine), temp1, style1);
 			
-			codePaneDocument.remove(lineNumberPositions.get(currentLine), lineNumberPositions.get(currentLine+1) - lineNumberPositions.get(currentLine));
-	        Style style2 = codePane.addStyle("instruction style", null);
-	        StyleConstants.setBackground(style2, Color.BLUE);
-			codePaneDocument.insertString(lineNumberPositions.get(currentLine), temp2, style2);
+			// Add the new background
+			if (currentLine != -1){
+				// -1 represents no fill
+				String temp2 = text.substring(lineNumberPositions.get(currentLine), lineNumberPositions.get(currentLine+1));
+				codePaneDocument.remove(lineNumberPositions.get(currentLine), lineNumberPositions.get(currentLine+1) - lineNumberPositions.get(currentLine));
+		        Style style2 = codePane.addStyle("instruction style", null);
+		        StyleConstants.setBackground(style2, Color.BLUE);
+				codePaneDocument.insertString(lineNumberPositions.get(currentLine), temp2, style2);
+			}
 			
 		} catch (BadLocationException e) {
 			e.printStackTrace();
@@ -355,6 +360,7 @@ public class View {
 						// When the code has finished, print the memory and the time taken
 						printToConsole(interpreter.printMemory());
 						runButton.setEnabled(true);
+						updateCurrentLine(-1, interpreterController.getLastLine());
 						
 					}
 					@Override
@@ -362,7 +368,6 @@ public class View {
 						// When the code has finished a step, print the memory and the time taken
 						stepButton.setEnabled(true);
 						updateCurrentLine(interpreterController.getCurrentLine(), interpreterController.getLastLine());
-						System.out.println(interpreterController.getLastLine());
 					}
 				});
 //				updateCurrentLine(0, 0);

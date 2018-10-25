@@ -1,5 +1,5 @@
 clear X;
-while X not 300000 do;
+while X not 3 do;
 incr X;
 end;
 while X not 0 do;

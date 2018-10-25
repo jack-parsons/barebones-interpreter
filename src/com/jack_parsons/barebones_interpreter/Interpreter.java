@@ -26,11 +26,14 @@ public class Interpreter{
 	
 	public void step () {
 		// Execute a single line
-		executeLine(barebonesCode.get(currentLine), currentLine);
-		finishedStepEvent();
 		if (currentLine >= barebonesCode.size()){
+			// Check if finished
 			finishedEvent();
+			stopping = true;
+			return;
 		}
+		executeLine(barebonesCode.get(currentLine), currentLine); 
+		finishedStepEvent();
 		incrementLine();
 	}
 	
@@ -80,6 +83,7 @@ public class Interpreter{
 		// Notify all listeners that the program has finished
 		for (InterpreterListener listener : listeners) {
 			listener.finishedEvent();
+			System.out.println("hi");
 		}
 		stopping = false;
 	}
@@ -315,7 +319,7 @@ public class Interpreter{
 			break;
 		default:
 			conditionMet = false;
-			System.out.print("Operator not found:" + Operator);
+			errorMessage("Operator not found:" + Operator, -1);
 		}
 		
 		if (conditionMet) {
