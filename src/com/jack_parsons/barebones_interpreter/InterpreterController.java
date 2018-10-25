@@ -22,6 +22,7 @@ public class InterpreterController extends Thread {
 			   @Override
 			   public void finishedEvent () {
 				   setRunning(false);
+				   System.out.println(123);
 			   }
 		   });
 		   interpreter.start(stepping);

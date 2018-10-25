@@ -304,6 +304,15 @@ public class Interpreter{
 		case "not":
 			conditionMet = !variableNamespace.get(varName).equals(convertToActualType(conditionValue));
 			break;
+		case "==":
+			conditionMet = variableNamespace.get(varName).equals(convertToActualType(conditionValue));
+			break;
+		case ">":
+			conditionMet = variableNamespace.get(varName) > (int)(convertToActualType(conditionValue));
+			break;
+		case "<":
+			conditionMet = variableNamespace.get(varName) < (int)(convertToActualType(conditionValue));
+			break;
 		default:
 			conditionMet = false;
 			System.out.print("Operator not found:" + Operator);
