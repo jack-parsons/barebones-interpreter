@@ -1,1 +1,6 @@
-bb
+incr X;
+incr X
+incr X;
+if X > 3 do
+incr X
+end if;

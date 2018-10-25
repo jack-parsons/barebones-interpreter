@@ -1,7 +1,7 @@
 clear X;
 while X not 3 do;
 incr X;
-end;
+end while;
 while X not 0 do;
 decr X;
-end;
+end while;

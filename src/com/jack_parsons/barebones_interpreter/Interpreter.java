@@ -9,7 +9,7 @@ public class Interpreter{
 	private ArrayList<String[]> barebonesCode;
 	private int currentLine, lastLine;
 	private HashMap<String, Integer> variableNamespace;
-	private HashMap<Integer, Integer> whileJumps;
+	private HashMap<Integer, Integer> jumpPoints;
 	private Stack<Integer> whileStack = new Stack<Integer>();
 	private float timeTaken;
 	private ArrayList<InterpreterListener> listeners = new ArrayList<InterpreterListener>();
@@ -83,7 +83,6 @@ public class Interpreter{
 		// Notify all listeners that the program has finished
 		for (InterpreterListener listener : listeners) {
 			listener.finishedEvent();
-			System.out.println("hi");
 		}
 		stopping = false;
 	}
@@ -134,26 +133,30 @@ public class Interpreter{
 //		System.exit(1);
 	}
 	
-	private void processWhileJumpPoints() {
+	private void processJumpPoints() {
 		// 'While jump points' are lines containing the start of a while loop which then connects with an end statement
-		whileJumps = new HashMap<Integer, Integer>();
-		Stack<Integer> whilePositions = new Stack<Integer>();
+		jumpPoints = new HashMap<Integer, Integer>();
+		Stack<Integer> jumpPositions = new Stack<Integer>();
 		for (int lineNumber = 0; lineNumber < barebonesCode.size(); lineNumber++) {
 			String[] line = barebonesCode.get(lineNumber);
 			if (line[0].equals("while")){
 				// Put this while loop line number at the top of the stack
-				whilePositions.add(lineNumber);
+				jumpPositions.add(lineNumber);
+			}
+			if (line[0].equals("if")){
+				// Put this if statement line number at the top of the stack
+				jumpPositions.add(lineNumber);
 			} else if (line[0].equals("end")){
 				// Add a new jump to the while jumps HashMap and remove the top while loop from the stack
 				try {
-					whileJumps.put(whilePositions.pop(), lineNumber);
+					jumpPoints.put(jumpPositions.pop(), lineNumber);
 				} catch (EmptyStackException e) {
-					errorMessage("while-end mismatch", lineNumber);
+					errorMessage("while/if-end mismatch", lineNumber);
 				}
 			}
 		}
-		if (whilePositions.size() != 0){
-			errorMessage("while-end mismatch", -1);
+		if (jumpPositions.size() != 0){
+			errorMessage("while/if-end mismatch", -1);
 		}
 	}
 	
@@ -190,6 +193,7 @@ public class Interpreter{
 		case "incr":
 		case "decr":
 		case "while":
+		case "if":
 		case "end":
 			if (position == 0) {
 				// Only an instruction if at start of line
@@ -224,7 +228,7 @@ public class Interpreter{
 				
 				line = barebonesBufferedReader.readLine();
 			}
-			processWhileJumpPoints();
+			processJumpPoints();
 		} catch (IOException e) {
 			outputString("Error reading text file");
 			e.printStackTrace();
@@ -243,8 +247,11 @@ public class Interpreter{
 		case "while":
 			valid = (line.length == 5);
 			break;
+		case "if":
+			valid = (line.length == 5);
+			break;
 		case "end":
-			valid = (line.length == 1);
+			valid = (line.length == 2);
 			break;
 		}
 		return valid;
@@ -272,8 +279,11 @@ public class Interpreter{
 		case "while":
 			startWhile(line[1], line[2], line[3]);
 			break;
+		case "if":
+			ifStatement(line[1], line[2], line[3]);
+			break;
 		case "end":
-			endStatement();
+			endStatement(line[1]);
 			break;
 		default:
 			errorMessage(String.format("Invalid operator"), lineNumber);
@@ -290,15 +300,18 @@ public class Interpreter{
 		}
 	}
 	
-	private void endStatement(){
-		// Return to the line before the last while loop
-		setCurrentLine(whileStack.pop()-1);
+	private void endStatement(String type){
+		// Return to the line before the last while loop if it is 'end while'
+		switch (type) {
+		case "while":
+			setCurrentLine(whileStack.pop()-1);
+			break;
+		}
 	}
 	
-	private void startWhile(String varName, String Operator, String conditionValue) {
-		// Start of a while loop
+	private boolean conditionMet (String varName, String Operator, String conditionValue) {
+		// Returns whether a condition was met
 		boolean conditionMet;
-		
 		if (!variableNamespace.containsKey(varName)){
 			// If the variable is not initialised yet, set it to zero
 			clearVar(varName);
@@ -322,10 +335,25 @@ public class Interpreter{
 			errorMessage("Operator not found:" + Operator, -1);
 		}
 		
-		if (conditionMet) {
+		return conditionMet;
+	}
+	
+	private void startWhile(String varName, String Operator, String conditionValue) {
+		// Start of a while loop
+		
+		if (conditionMet(varName, Operator, conditionValue)) {
 			whileStack.add(currentLine);
 		} else {
-			setCurrentLine(whileJumps.get(currentLine));
+			setCurrentLine(jumpPoints.get(currentLine));
+		}
+	}
+	
+	private void ifStatement(String varName, String Operator, String conditionValue) {
+		// If statement
+		
+		if (!conditionMet(varName, Operator, conditionValue)) {
+			// If condition not met then jump to end of if
+			setCurrentLine(jumpPoints.get(currentLine));
 		}
 	}
 
